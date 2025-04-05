@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bear Café</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="images-coffee/favicon.png">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)),
+                 url('images-coffee/cafe-1869656.jpg') no-repeat center center;
+            background-size: cover;
+            background-attachment: fixed; /* ป้องกันการเลื่อนของพื้นหลัง */
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            color: white;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden; /* ป้องกัน scroll */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+}
+
+
+        header {
+            background: rgba(111, 78, 55, 0.95);
+            color: white;
+            padding: 20px;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        nav {
+            margin-top: 10px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 0 15px;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        nav a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 30px;
+            margin-top: 80px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            text-align: center;
+            color: #3e2723;
+        }
+
+        .container h2 {
+            font-size: 2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .container p {
+            font-size: 1.2em;
+            font-weight: 300;
+        }
+
+        .btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 25px;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: white;
+            background: #6f4e37;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #543a2f;
+        }
+
+        .about {
+            margin-top: 50px;
+            padding: 20px;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            color: #3e2723;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        footer {
+            margin-top: 50px;
+            padding: 20px;
+            background: rgba(111, 78, 55, 0.95);
+            color: white;
+            width: 100%;
+            text-align: center;
+            font-size: 1em;
+        }
+
+        footer a {
+            color: #ffdd99;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>☕Bear Café</h1>
+        <nav id="auth-link">
+            <a href="/menu">📜 Menu</a>
+            <a href="/orders">📦 Orders</a>
+            <a href="/stock">📦 Stock</a>
+            <a href="/staff">👨‍🍳 Staff</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            <h2>Welcome to Bear Café</h2>
+            <p>Experience the taste of premium coffee with exceptional service.</p>
+            <a href="/menu" class="btn">View Menu</a>
+        </div>
+
+        <section class="about">
+            <h2>About Us</h2>
+            <p>Bear Café has been serving high-quality coffee since 2015. Our beans are carefully selected and roasted
+                to perfection.</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>📍 Location: 123 Coffee Street, Bangkok</p>
+        <p>📞 Phone: 081-234-5678</p>
+        <p>📧 Email: contact@bearcafe.com</p>
+        
+    </footer>
+    <script>
+        async function updateAuthLink() {
+            const response = await fetch('/auth-status'); // สร้าง API endpoint นี้ (ดูด้านล่าง)
+            const data = await response.json();
+
+            const authLink = document.getElementById('auth-link');
+            if (data.isLoggedIn) {
+                authLink.innerHTML = `
+          <a href="/">🏠 Home</a>
+          <a href="/menu">📜 Menu</a>
+          <a href="/orders">📦 Orders</a>
+          <a href="/stock">📦 Stock</a>
+          <a href="/staff">👨‍🍳 Staff</a>
+            <a href="/logout">🚪 Logout</a>
+            `;
+            } else {
+                authLink.innerHTML = `
+        <a href="/">🏠 Home</a>
+          <a href="/menu">📜 Menu</a>
+          <a href="/orders">📦 Orders</a>
+          <a href="/stock">📦 Stock</a>
+          <a href="/staff">👨‍🍳 Staff</a>
+        <a href="/login">🚪 Login</a>
+        `;
+            }
+        }
+
+        updateAuthLink();
+    </script>
+</body>
+
+</html>

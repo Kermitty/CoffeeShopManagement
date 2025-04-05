@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - ร้านกาแฟ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+        }
+
+        h2 {
+            color: #6f4e37;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin: 10px 0 5px;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #6f4e37;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #5a3d2b;
+        }
+
+        p {
+            margin-top: 15px;
+        }
+
+        a {
+            color: #6f4e37;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <h2>Log in</h2>
+        <form id="loginForm">
+            <label for="username">Username or Email</label>
+            <input type="text" id="username" name="username" required>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+
+            <button type="submit">Log in</button>
+            <p>Dont have an account? <a href="/register">Register</a></p>
+        </form>
+        <div id="message" style="color: red;"></div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new URLSearchParams(new FormData(form));
+
+            fetch('/api/login', { //แก้ไขตรงนี้
+                method: 'POST',
+                body: formData,
+                signal: AbortSignal.timeout(5000),
+            })
+                .then(response => response.text())
+                .then(message => {
+                    document.getElementById('message').textContent = message;
+                    if (message === "เข้าสู่ระบบสำเร็จ") {
+                        window.location.href = "/";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('message').textContent = 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ';
+                });
+        });
+    </script>
+</body>
+
+</html>

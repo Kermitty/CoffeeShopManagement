@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จัดการเมนูกาแฟ</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: url('images-coffee/coffee-5447420.jpg') no-repeat center center fixed;
+      background-size: cover;
+      /* ปรับให้รูปเต็มจอโดยไม่เสียสัดส่วน */
+      background-position: center;
+      /* จัดให้อยู่ตรงกลาง */
+      background-attachment: fixed;
+      /* ทำให้รูปไม่เลื่อนตาม */
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      color: #3e2723;
+      height: 100vh;
+      /* ให้ body มีความสูงเต็มหน้าจอ */
+    }
+
+
+    header {
+      background-color: #6f4e37;
+      color: white;
+      padding: 15px;
+    }
+
+    nav a {
+      margin: 0 15px;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .container,
+    .form-container {
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 50%;
+    }
+
+    table {
+      width: 80%;
+      margin: auto;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #6f4e37;
+      color: white;
+    }
+
+    input {
+      padding: 10px;
+      margin: 10px;
+      width: 200px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    button {
+      background-color: #6f4e37;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background-color: #5a3e26;
+    }
+
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      float: right;
+    }
+
+    .delete-btn:hover {
+      background-color: #c82333;
+    }
+
+    .edit-btn {
+      background-color: #ffc107;
+      color: #343a40;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 5px;
+      float: right;
+    }
+
+    .edit-btn:hover {
+      background-color: #e0a800;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 10% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 50%;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    .modal-header {
+      color: #6f4e37;
+      text-align: left;
+      border-bottom: 2px solid #6f4e37;
+      padding-bottom: 10px;
+    }
+
+    .modal-body {
+      text-align: left;
+      padding: 20px 0;
+    }
+
+    .modal-footer {
+      text-align: right;
+      border-top: 2px solid #6f4e37;
+      padding-top: 10px;
+    }
+
+    .modal input[type="text"],
+    .modal input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+    }
+
+    .modal-btn {
+      background-color: #6f4e37;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 0 10px;
+    }
+
+    .modal-btn:hover {
+      background-color: #5a3e26;
+    }
+
+    .modal-cancel-btn {
+      background-color: #e7e7e7;
+      color: #2c3e50;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 0 10px;
+    }
+
+    .modal-cancel-btn:hover {
+      background-color: #d3d3d3;
+    }
+
+    .menu-image {
+      max-width: 50px;
+      max-height: 50px;
+    }
+
+    .modal-image {
+      max-width: 100px;
+      max-height: 100px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>📜 add/edit/delete coffee menu 📜</h1>
+    <nav id="auth-link">
+      <a href="/">🏠 Home</a>
+      <a href="/menu">📜 Menu</a>
+      <a href="/orders">📦 Orders</a>
+      <a href="/staff">👨‍🍳 Staff</a>
+    </nav>
+  </header>
+  <main>
+    <div class="form-container">
+      <h2>add menu</h2>
+      <form id="add-menu-form" enctype="multipart/form-data">
+        <input type="text" id="menu-name" placeholder="Menu name" name="name" required>
+        <input type="number" id="menu-price" placeholder="Price (Baht)" name="price" required>
+        <input type="number" id="menu-quantity" placeholder="Amount" name="quantity" required>
+        <input type="file" id="menu-image" name="menuImage" accept="image/*" required>
+        <button type="submit">add</button>
+      </form>
+    </div>
+
+    <div class="container">
+      <h2>Menu Item</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Menu name</th>
+            <th>Price</th>
+            <th>Amount</th>
+            <th>status</th>
+            <th>Edit</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody id="menu-list">
+        </tbody>
+      </table>
+    </div>
+
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <h2 class="modal-header">Edit menu</h2>
+        <div class="modal-body">
+          <img id="edit-menu-image-preview" src="" alt="Current Menu Image" class="modal-image"><br>
+          <label for="edit-menu-name">Menu Name:</label>
+          <input type="text" id="edit-menu-name" required><br><br>
+          <label for="edit-menu-price">Price (Baht):</label>
+          <input type="number" id="edit-menu-price" required><br><br>
+          <label for="edit-menu-quantity">Amount:</label>
+          <input type="number" id="edit-menu-quantity" required><br><br>
+          <label for="edit-menu-image">New Image:</label>
+          <input type="file" id="edit-menu-image" name="editMenuImage" accept="image/*">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="modal-btn" id="save-edit-btn">Submit</button>
+          <button type="button" class="modal-cancel-btn" id="cancel-edit-btn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+  <script>
+    const modal = document.getElementById("editModal");
+    const cancelEditBtn = document.getElementById("cancel-edit-btn");
+    const saveEditBtn = document.getElementById("save-edit-btn");
+    let editingMenuName = "";
+
+    cancelEditBtn.onclick = function () {
+      modal.style.display = "none";
+    }
+
+    window.onclick = function (event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadMenu();
+    });
+
+    async function loadMenu() {
+      const menuList = document.getElementById("menu-list");
+      menuList.innerHTML = "";
+      try {
+        const response = await fetch("/api/menu");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const menuData = await response.json();
+
+        menuData.forEach(menu => {
+          const row = document.createElement("tr");
+          const status = menu.quantity > 0 ? "มีสินค้า" : "หมด";
+          row.innerHTML = `
+                                  <td><img src="${menu.image_path}" alt="${menu.menu_name}" class="menu-image"></td>
+                                  <td>${menu.menu_name}</td>
+                                  <td>${menu.price} บาท</td>
+                                  <td>${menu.quantity}</td>
+                                  <td>${status}</td>
+                                  <td><button class="btn btn-edit" onclick="showEditModal('${menu.menu_name}')">Edit</button></td>
+                                  <td><button class="delete-btn" onclick="deleteMenu('${menu.menu_name}')">Delete</button></td>
+                              `;
+          menuList.appendChild(row);
+        });
+      } catch (error) {
+        console.error("เกิดข้อผิดพลาดในการโหลดเมนู", error);
+        menuList.innerHTML = `<tr><td colspan="5">ไม่สามารถโหลดเมนูได้</td></tr>`;
+      }
+    }
+
+    document.getElementById("add-menu-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const form = event.target;
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch("/api/menu", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP error! status: ${response.status}, responseText: ${errorText}`);
+        }
+
+        const responseData = await response.json();
+
+        const menuList = document.getElementById("menu-list");
+        const row = document.createElement("tr");
+        const status = responseData.quantity > 0 ? "มีสินค้า" : "หมด";
+        row.innerHTML = `
+                                  <td><img src="${responseData.image_path}" alt="${responseData.name}" class="menu-image"></td>
+                                  <td>${responseData.name}</td>
+                                  <td>${responseData.price} บาท</td>
+                                  <td>${responseData.quantity}</td>
+                                  <td>${status}</td>
+                                  <td><button class="btn btn-edit" onclick="editMenu('${responseData.name}')">Edit</button></td>
+                                  <td><button class="delete-btn" onclick="deleteMenu('${responseData.name}')">Delete</button></td>
+                              `;
+        menuList.appendChild(row);
+
+        form.reset();
+        alert("เพิ่มเมนูสำเร็จ!");
+      } catch (error) {
+        console.error("เกิดข้อผิดพลาดในการเพิ่มเมนู", error);
+        alert("ไม่สามารถเพิ่มเมนูได้ กรุณาลองใหม่");
+      }
+    });
+
+    async function deleteMenu(name) {
+      if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบเมนู ${name} ?`)) {
+        try {
+          const response = await fetch(`/api/menu/${name}`, {
+            method: "DELETE",
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, responseText: ${errorText}`);
+          }
+
+          alert("ลบเมนูสำเร็จ!");
+          loadMenu();
+        } catch (error) {
+          console.error("เกิดข้อผิดพลาดในการลบเมนู", error);
+          alert("ไม่สามารถลบเมนูได้ กรุณาลองใหม่");
+        }
+      }
+    }
+
+    async function updateAuthLink() {
+      const response = await fetch('/auth-status'); // สร้าง API endpoint นี้ (ดูด้านล่าง)
+      const data = await response.json();
+
+      const authLink = document.getElementById('auth-link');
+      if (data.isLoggedIn) {
+        authLink.innerHTML = `
+          <a href="/">🏠 Home</a>
+          <a href="/menu">📜 Menu</a>
+          <a href="/orders">📦 Orders</a>
+          <a href="/stock">📦 Stock</a>
+          <a href="/staff">👨‍🍳 Staff</a>
+            <a href="/logout">🚪 Logout</a>
+            `;
+      } else {
+        authLink.innerHTML = `
+        <a href="/">🏠 Home</a>
+          <a href="/menu">📜 Menu</a>
+          <a href="/orders">📦 Orders</a>
+          <a href="/staff">👨‍🍳 Staff</a>
+        `;
+      }
+    }
+
+    updateAuthLink();
+
+    async function showEditModal(name) {
+      editingMenuName = name;
+      modal.style.display = "block";
+      try {
+        const response = await fetch(`/api/menu-edit/${name}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const menuData = await response.json();
+
+        document.getElementById("edit-menu-name").value = menuData[0].menu_name;
+        document.getElementById("edit-menu-price").value = menuData[0].price;
+        document.getElementById("edit-menu-quantity").value = menuData[0].quantity;
+        document.getElementById("edit-menu-image-preview").src = menuData[0].image_path; // Show current image
+      } catch (error) {
+        console.error("Error fetching menu details:", error);
+        alert("ไม่สามารถโหลดข้อมูลเมนูได้");
+        modal.style.display = "none";
+      }
+    }
+
+    saveEditBtn.onclick = async (event) => {
+      event.preventDefault();
+
+      const form = new FormData();
+      form.append("newName", document.getElementById("edit-menu-name").value); // Use "newName"
+      form.append("price", document.getElementById("edit-menu-price").value);
+      form.append("quantity", document.getElementById("edit-menu-quantity").value);
+      const newImage = document.getElementById("edit-menu-image").files[0];
+      if (newImage) {
+        form.append("editMenuImage", newImage); // This name MUST match multer's upload.single()
+      }
+
+      try {
+        const response = await fetch(`/api/menu/${editingMenuName}`, {
+          method: "PUT",
+          body: form,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP error! status: ${response.status}, responseText: ${errorText}`);
+        }
+
+        alert("แก้ไขเมนูสำเร็จ!");
+        modal.style.display = "none";
+        loadMenu();
+      } catch (error) {
+        console.error("Error updating menu:", error);
+        alert("ไม่สามารถแก้ไขเมนูได้ กรุณาลองใหม่");
+      }
+    };
+  </script>
+</body>
+
+</html>

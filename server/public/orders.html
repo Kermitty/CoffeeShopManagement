@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 คำสั่งซื้อ</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: url('images-coffee/coffee-2560260.jpg') no-repeat center center fixed;
+            background-size: cover;
+            /* ปรับให้รูปเต็มจอโดยไม่เสียสัดส่วน */
+            background-position: center;
+            /* จัดให้อยู่ตรงกลาง */
+            background-attachment: fixed;
+            /* ทำให้รูปไม่เลื่อนตาม */
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            color: #3e2723;
+            height: 100vh;
+            /* ให้ body มีความสูงเต็มหน้าจอ */
+        }
+
+
+        header {
+            background-color: #6f4e37;
+            color: white;
+            padding: 15px;
+        }
+
+        nav a {
+            margin: 0 15px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 80%;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #6f4e37;
+            color: white;
+        }
+
+        .btn {
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .btn-delete {
+            background-color: red;
+            color: white;
+        }
+
+        .btn-edit {
+            background-color: orange;
+            color: white;
+        }
+
+        /* Modal Styles (Basic) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .text-white {
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>📦 คำสั่งซื้อ</h1>
+        <nav id="auth-link">
+            <a href="/">🏠 Home</a>
+            <a href="/menu">📜 Menu</a>
+            <a href="/stock">📦 Stock</a>
+            <a href="/staff">👨‍🍳 Staff</a>
+        </nav>
+    </header>
+    <div>
+        <h2 class="text-white">Orders Payment</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Customer Name</th>
+                    <th>Ordering</th>
+                    <th>Total (Baht)</th>
+                    <th>Date/Times Ordered</th>
+                    <th>Management</th>
+                </tr>
+            </thead>
+            <tbody id="orders-list"></tbody>
+        </table>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2>แก้ไขคำสั่งซื้อ</h2>
+            <form id="editOrderForm">
+                <label for="editCustomerName">ชื่อลูกค้า:</label>
+                <input type="text" id="editCustomerName" name="editCustomerName" required><br><br>
+                <div id="editOrderItems">
+                </div>
+                <br>
+                <label for="editTotalPrice">ราคารวม:</label>
+                <input type="text" id="editTotalPrice" name="editTotalPrice" readonly><br><br>
+                <button type="submit" class="btn btn-edit">บันทึกการแก้ไข</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById("editModal");
+        const closeModalBtn = document.getElementById("closeModal");
+        const editOrderForm = document.getElementById("editOrderForm");
+        const editCustomerNameInput = document.getElementById("editCustomerName");
+        const editOrderItemsDiv = document.getElementById("editOrderItems");
+        const editTotalPriceInput = document.getElementById("editTotalPrice");
+
+        closeModalBtn.onclick = function () {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadOrders();
+        });
+
+        async function loadOrders() {
+            const ordersList = document.getElementById("orders-list");
+            ordersList.innerHTML = "";
+
+            try {
+                const response = await fetch("/api/orders"); // Fetch from server
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const orders = await response.json();
+
+                orders.forEach((order, index) => {
+                    const row = document.createElement("tr");
+
+                    // Format date and time
+                    const orderDate = new Date(order.order_date);
+                    const formattedDate = orderDate.toLocaleDateString('th-TH');
+                    const formattedTime = orderDate.toLocaleTimeString('th-TH');
+
+                    row.innerHTML = `
+                        <td>${order.customer_name}</td>
+                        <td>${order.items}</td>
+                        <td>${order.total_price}</td>
+                        <td>${formattedDate} ${formattedTime}</td>
+                        <td>
+                            <button class="btn btn-edit" onclick="showEditModal(${order.order_id})">แก้ไข</button>
+                            <button class="btn btn-delete" onclick="deleteOrder(${order.order_id})">ลบ</button>
+                        </td>
+                    `;
+                    ordersList.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error fetching orders:", error);
+                ordersList.innerHTML = "<tr><td colspan='5'>ไม่สามารถโหลดข้อมูลคำสั่งซื้อได้</td></tr>";
+            }
+        }
+
+        async function updateAuthLink() {
+            const response = await fetch('/auth-status'); // สร้าง API endpoint นี้ (ดูด้านล่าง)
+            const data = await response.json();
+
+            const authLink = document.getElementById('auth-link');
+            if (data.isLoggedIn) {
+                authLink.innerHTML = `
+          <a href="/">🏠 Home</a>
+          <a href="/menu">📜 Menu</a>
+          <a href="/orders">📦 Orders</a>
+          <a href="/stock">📦 Stock</a>
+          <a href="/staff">👨‍🍳 Staff</a>
+            <a href="/logout">🚪 Logout</a>
+            `;
+            } else {
+                authLink.innerHTML = `
+        <a href="/">🏠 Home</a>
+          <a href="/menu">📜 Menu</a>
+          <a href="/orders">📦 Orders</a>
+          <a href="/staff">👨‍🍳 Staff</a>
+        `;
+            }
+        }
+
+        updateAuthLink();
+
+        async function deleteOrder(orderId) {
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบคำสั่งซื้อนี้?")) {
+                try {
+                    const response = await fetch(`/api/orders/${orderId}`, {
+                        method: "DELETE"
+                    });
+
+                    if (response.ok) {
+                        alert("ลบคำสั่งซื้อเรียบร้อยแล้ว");
+                        loadOrders(); // Refresh the order list
+                    } else {
+                        const error = await response.json();
+                        alert("ไม่สามารถลบคำสั่งซื้อได้: " + error.message);
+                    }
+                } catch (error) {
+                    console.error("Error deleting order:", error);
+                    alert("เกิดข้อผิดพลาดในการลบคำสั่งซื้อ");
+                }
+            }
+        }
+
+        async function showEditModal(orderId) {
+            modal.style.display = "block";
+            try {
+                const response = await fetch(`/api/orders/${orderId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const order = await response.json();
+
+                // Populate the form with order details
+                editCustomerNameInput.value = order.customer_name;
+                editOrderItemsDiv.innerHTML = ""; // Clear previous items
+                let totalPrice = 0;
+                order.items.forEach((item, index) => {
+                    const itemDiv = document.createElement("div");
+                    itemDiv.innerHTML = `
+                <label for="menu_name_${index}">รายการ:</label>
+                <input type="text" id="menu_name_${index}" name="menu_name_${index}" value="${item.menu_name}" required>
+                <label for="quantity_${index}">จำนวน:</label>
+                <input type="number" id="quantity_${index}" name="quantity_${index}" value="${item.quantity}" required>
+                <label for="price_${index}">ราคา:</label>
+                <input type="number" id="price_${index}" name="price_${index}" value="${item.price}" required>
+                <button type="button" onclick="removeItem(this.parentNode)">ลบ</button><br><br>
+            `;
+                    editOrderItemsDiv.appendChild(itemDiv);
+                    totalPrice += item.quantity * item.price;
+                });
+                editTotalPriceInput.value = totalPrice;
+
+                // Add a button to add more items
+                const addItemButton = document.createElement("button");
+                addItemButton.type = "button";
+                addItemButton.textContent = "เพิ่มรายการ";
+                addItemButton.onclick = addItem;
+                editOrderItemsDiv.appendChild(addItemButton);
+
+                // Store orderId for form submission
+                editOrderForm.dataset.orderId = orderId;
+
+            } catch (error) {
+                console.error("Error fetching order details:", error);
+                alert("ไม่สามารถโหลดข้อมูลคำสั่งซื้อได้");
+                modal.style.display = "none";
+            }
+        }
+
+        // Function to add a new item input
+        let itemCount = 0;
+
+        function addItem() {
+            itemCount++;
+            const itemDiv = document.createElement("div");
+            itemDiv.innerHTML = `
+            <label for="menu_name_${itemCount}">รายการ:</label>
+            <input type="text" id="menu_name_${itemCount}" name="menu_name_${itemCount}" value="" required>
+            <label for="quantity_${itemCount}">จำนวน:</label>
+            <input type="number" id="quantity_${itemCount}" name="quantity_${itemCount}" value="1" required>
+            <label for="price_${itemCount}">ราคา:</label>
+            <input type="number" id="price_${itemCount}" name="price_${itemCount}" value="0" required>
+            <button type="button" class="btn btn-delete" onclick="removeItem(this.parentNode)">ลบ</button><br><br>
+        `;
+            editOrderItemsDiv.appendChild(itemDiv);
+            editOrderForm.appendChild(editTotalPriceInput.parentNode);
+            calculateTotalPrice();
+        }
+
+        // Function to remove an item input
+        function removeItem(itemDiv) {
+            itemDiv.remove();
+            calculateTotalPrice(); // Recalculate total
+        }
+
+        // Function to calculate total price
+        function calculateTotalPrice() {
+            let totalPrice = 0;
+            const itemInputs = document.querySelectorAll('#editOrderItems div');
+            itemInputs.forEach(item => {
+                const quantity = parseInt(item.querySelector('input[name^="quantity"]').value || 0, 10); // Default to 0
+                const price = parseFloat(item.querySelector('input[name^="price"]').value || 0);   // Default to 0
+                if (!isNaN(quantity) && !isNaN(price)) {
+                    totalPrice += quantity * price;
+                }
+            });
+            return totalPrice;
+        }
+
+        // Recalculate total price on input change
+        editOrderItemsDiv.addEventListener('change', calculateTotalPrice);
+
+        // Handle form submission
+        editOrderForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const orderId = editOrderForm.dataset.orderId;
+            const updatedCustomerName = editCustomerNameInput.value;
+            const updatedItems = [];
+
+            const itemInputs = document.querySelectorAll('#editOrderItems div');
+            itemInputs.forEach(item => {
+                const menu_name = item.querySelector('input[name^="menu_name"]').value;
+                const quantity = parseInt(item.querySelector('input[name^="quantity"]').value, 10);
+                const price = parseFloat(item.querySelector('input[name^="price"]').value);
+                if (menu_name && !isNaN(quantity) && !isNaN(price)) {
+                    updatedItems.push({ menu_name, quantity, price });
+                }
+            });
+
+            const updatedTotalPrice = calculateTotalPrice();
+
+            try {
+                const updateResponse = await fetch(`/api/orders/${orderId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        customer_name: updatedCustomerName,
+                        items: updatedItems,
+                        total_price: updatedTotalPrice,
+                    }),
+                });
+
+                if (updateResponse.ok) {
+                    alert("แก้ไขข้อมูลคำสั่งซื้อเรียบร้อยแล้ว");
+                    modal.style.display = "none";
+                    loadOrders(); // Refresh the order listผ
+                } else {
+                    const updateError = await updateResponse.json();
+                    console.error("Server update error:", updateError); // Log server error
+                    alert("ไม่สามารถแก้ไขข้อมูลคำสั่งซื้อได้: " + updateError.message);
+                }
+            } catch (error) {
+                console.error("Client update error:", error); // Log client error
+                alert("เกิดข้อผิดพลาดในการแก้ไขข้อมูลคำสั่งซื้อ");
+            }
+        });
+    </script>
+</body>
+
+</html>

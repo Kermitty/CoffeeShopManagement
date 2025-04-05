@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check in - Check out for Employee</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        header {
+            background-color: #6f4e37;
+            color: white;
+            padding: 15px;
+        }
+
+        nav a {
+            margin: 0 15px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+
+        .container,
+        .form-container {
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+        }
+
+        table {
+            width: 90%;
+            margin: auto;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #6f4e37;
+            color: white;
+        }
+
+        .form-container input {
+            padding: 10px;
+            margin: 10px;
+            width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .form-container button {
+            background-color: #6f4e37;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 0 10px;
+        }
+
+        .form-container button:hover {
+            background-color: #5a3e26;
+        }
+
+        .sign-out-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 10px 0 0 10px;
+        }
+
+        .sign-out-btn:hover {
+            background-color: #c82333;
+        }
+
+        .delete-btn {
+            background-color: #f44336;
+            /* สีแดง */
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 10px 0 0 10px;
+        }
+
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>👨‍🍳 Check employee work time 👨‍🍳</h1>
+        <nav id="auth-link">
+            <a href="/">🏠 Home</a>
+            <a href="/menu">📜 Menu</a>
+            <a href="/orders">📦 Orders</a>
+            <a href="/stock">📦 Stock</a>
+        </nav>
+    </header>
+    <main>
+        <div class="container">
+            <h2>Start work - finish work</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee Name</th>
+                        <th>Position</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Finish work</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="employee-list"></tbody>
+            </table>
+        </div>
+
+        <div class="form-container">
+            <h2>Check in - Check out of work</h2>
+            <form id="add-employee-form">
+                <input type="text" id="employee-name" placeholder="Employee Name" required>
+                <input type="text" id="employee-position" placeholder="Position" required>
+                <input type="date" id="work-date" name="work-date" required>
+                <input type="time" id="work-time" name="work-time" required>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </main>
+    <script>
+        document.getElementById("add-employee-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const name = document.getElementById("employee-name").value;
+            const position = document.getElementById("employee-position").value;
+            const date = document.getElementById("work-date").value;
+            const time = document.getElementById("work-time").value;
+
+            try {
+                const response = await fetch("/api/attendance", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        name,
+                        position,
+                        date,
+                        time
+                    }),
+                });
+
+                if (response.ok) {
+                    alert("Added Employee attendance!");
+                    loadAttendance();
+                    document.getElementById("add-employee-form").reset();
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}, responseText: ${errorText}`);
+                }
+            } catch (error) {
+                console.error("Error adding attendance:", error);
+                alert("Cannot Added Employee attendance ,Please try again.");
+            }
+        });
+
+        async function deleteAttendance(name) {
+            if (confirm(`Are you sure to remove ${name} ?`)) {
+                try {
+                    const response = await fetch(`/api/attendance/${name}`, {
+                        method: "DELETE",
+                        headers: {
+                            "Content-Type": "application/json",
+                        }
+                    });
+
+                    if (response.ok) {
+                        alert("removed!");
+                        loadAttendance();
+                    } else {
+                        const errorText = await response.text();
+                        throw new Error(`HTTP error! status: ${response.status}, responseText: ${errorText}`);
+                    }
+                } catch (error) {
+                    console.error("Error deleting attendance:", error);
+                    alert("Cannot remove attendance, Please try again.");
+                }
+            }
+        }
+
+        async function loadAttendance() {
+            const employeeList = document.getElementById("employee-list");
+            employeeList.innerHTML = "";
+            try {
+                const response = await fetch("/api/attendance");
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const attendanceData = await response.json();
+
+                attendanceData.forEach(record => {
+                    const row = document.createElement("tr");
+                    const formattedDate = new Date(record.date).toLocaleDateString('th-TH');
+                    row.innerHTML = `
+            <td>${record.name}</td>
+            <td>${record.position}</td>
+            <td>${formattedDate}</td>
+            <td>${record.time}</td>
+            <td>${record.leave_time || '-'}</td> 
+            <td><button class="sign-out-btn" onclick="signOut('${record.name}')">Check out</button></td>
+            <td><button class="delete-btn" onclick="deleteAttendance('${record.name}')">Remove</button></td>
+        `;
+                    employeeList.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error fetching attendance:", error);
+                employeeList.innerHTML = "<tr><td colspan='4'>Cannot loading attendence of Check in - Check out</td></tr>";
+            }
+        }
+        window.onload = loadAttendance;
+
+        async function updateAuthLink() {
+            const response = await fetch('/auth-status'); // สร้าง API endpoint นี้ (ดูด้านล่าง)
+            const data = await response.json();
+
+            const authLink = document.getElementById('auth-link');
+            if (data.isLoggedIn) {
+                authLink.innerHTML = `
+          <a href="/">🏠 Home</a>
+          <a href="/menu">📜 Menu</a>
+          <a href="/orders">📦 Orders</a>
+          <a href="/stock">📦 Stock</a>
+          <a href="/staff">👨‍🍳 Staff</a>
+            <a href="/logout">🚪 Logout</a>
+            `;
+            } else {
+                authLink.innerHTML = `
+        <a href="/">🏠 Home</a>
+          <a href="/menu">📜 Menu</a>
+          <a href="/orders">📦 Orders</a>
+          <a href="/staff">👨‍🍳 Staff</a>
+        `;
+            }
+        }
+
+        updateAuthLink();
+
+        async function signOut(name) {
+            if (confirm(`Are you sure to save attendance  ${name} ?`)) {
+                try {
+                    const response = await fetch(`/api/attendance-signout`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ name: name }),
+                    });
+
+                    if (response.ok) {
+                        alert("Check out time saved!");
+                        loadAttendance();
+                    } else {
+                        const errorText = await response.text();
+                        throw new Error(`HTTP error! status: ${response.status}, responseText: ${errorText}`);
+                    }
+                } catch (error) {
+                    console.error("Error signing out:", error);
+                    alert("Cannot save check out time, Please try again.");
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เมนูร้านกาแฟ</title>
+  <link rel="stylesheet" href="styles2.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f8f8;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    header {
+      background-color: #6f4e37;
+      color: white;
+      padding: 15px;
+    }
+
+    nav {
+      margin: 10px 0;
+    }
+
+    nav a {
+      margin: 0 15px;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .menu-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 20px;
+    }
+
+    .menu-item {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin: 15px;
+      padding: 10px;
+      width: 200px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .menu-item:hover {
+      transform: scale(1.05);
+    }
+
+    .menu-item img {
+      width: 100%;
+      border-radius: 10px;
+    }
+
+    .menu-item h3 {
+      margin: 10px 0 5px;
+    }
+
+    .order-container {
+      margin: 20px;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      display: inline-block;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>☕ coffee menu ☕</h1>
+    <nav id="auth-link">
+      <a href="/">🏠 Home</a>
+      <a href="/orders">📦 Orders</a>
+      <a href="/stock">📦 Stock</a>
+      <a href="/staff">👨‍🍳 Staff</a>
+    </nav>
+  </header>
+  <div class="order-container">
+    <h2>Please Orders</h2>
+    <label for="customer-name">Customer name:</label>
+    <input type="text" id="customer-name" placeholder="Enter customer name" oninput="updateCustomerName()">
+  </div>
+  <div class="menu-container" id="menu-list">
+  </div>
+  <div class="order-container">
+    <h2>Your Bills</h2>
+    <p>Customer name: <span id="customer-name-display">Enter customer name</span></p>
+    <ul class="order-list" id="order-list"></ul>
+    <strong>Total: <span id="total-price">0</span> Baht</strong>
+    <br>
+    <button onclick="checkout()">Payment</button>
+  </div>
+
+  <script>
+    const orderList = [];
+    const menuListContainer = document.getElementById("menu-list");
+
+    // ฟังก์ชันอัพเดตชื่อของลูกค้า
+    function updateCustomerName() {
+      const customerName = document.getElementById("customer-name").value;
+      document.getElementById("customer-name-display").textContent = customerName || "กรุณากรอกชื่อ";
+    }
+
+    // ฟังก์ชันเพิ่มสินค้าในคำสั่งซื้อ
+    async function addToOrder(name, price, element, maxQuantity) {
+      const quantity = parseInt(element.value, 10);
+      const totalPrice = price * quantity;
+
+      if (quantity <= 0) {
+        alert("กรุณากรอกจำนวนที่ถูกต้อง");
+        return;
+      }
+
+      if (quantity > maxQuantity) {
+        alert(`ขออภัย มีสินค้า ${name} เหลือเพียง ${maxQuantity} ชิ้น`);
+        element.value = maxQuantity; // Reset input to max
+        return;
+      }
+
+
+      // ตรวจสอบสินค้าซ้ำ (เหมือนเดิม)
+      const existingItemIndex = orderList.findIndex(item => item.name === name);
+
+      if (existingItemIndex !== -1) {
+        // สินค้าซ้ำ: ดึงข้อมูลจาก orderList
+        const existingQuantity = orderList[existingItemIndex].quantity;
+
+        if (quantity > maxQuantity - existingQuantity) {
+          alert(`ขออภัย มีสินค้า ${name} เหลือเพียง ${maxQuantity - existingQuantity} ชิ้น`);
+          element.value = maxQuantity - existingQuantity; // Reset input to remaining
+          return;
+        }
+
+        orderList[existingItemIndex].quantity += quantity;
+        orderList[existingItemIndex].totalPrice += totalPrice;
+
+      } else {
+        // สินค้าใหม่: เพิ่มลงใน orderList
+        orderList.push({ name, price, quantity, totalPrice });
+      }
+
+
+      renderOrder();
+    }
+
+
+    // ฟังก์ชันแสดงคำสั่งซื้อ
+    function renderOrder() {
+      const orderContainer = document.getElementById("order-list");
+      orderContainer.innerHTML = "";
+      let total = 0;
+      orderList.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `${item.name} - ${item.quantity} x ${item.price} Baht = ${item.totalPrice} Baht <span class="remove-item" onclick="removeFromOrder(${index})">❌</span>`;
+        orderContainer.appendChild(li);
+        total += item.totalPrice;
+      });
+      document.getElementById("total-price").textContent = total;
+    }
+
+    // ฟังก์ชันลบสินค้า
+    function removeFromOrder(index) {
+      orderList.splice(index, 1);
+      renderOrder();
+    }
+
+
+    async function updateAuthLink() {
+      const response = await fetch('/auth-status'); // สร้าง API endpoint นี้ (ดูด้านล่าง)
+      const data = await response.json();
+
+      const authLink = document.getElementById('auth-link');
+      if (data.isLoggedIn) {
+        authLink.innerHTML = `
+             <a href="/">🏠 Home</a>
+             <a href="/menu">📜 Menu</a>
+             <a href="/orders">📦 Orders</a>
+             <a href="/stock">📦 Stock</a>
+             <a href="/staff">👨‍🍳 Staff</a>
+              <a href="/logout">🚪 Logout</a>
+              `;
+      } else {
+        authLink.innerHTML = `
+             <a href="/">🏠 Home</a>
+             <a href="/menu">📜 Menu</a>
+             <a href="/orders">📦 Orders</a>
+             <a href="/staff">👨‍🍳 Staff</a>
+              `;
+      }
+    }
+
+    updateAuthLink();
+
+    // ฟังก์ชันการชำระเงิน
+    async function checkout() {
+      const customerName = document.getElementById("customer-name").value;
+      if (!customerName || orderList.length === 0) {
+        alert("Please enter a customer name and select items.");
+        return;
+      }
+
+      const order = {
+        customerName,
+        items: orderList,
+        totalPrice: document.getElementById("total-price").textContent,
+      };
+
+      try {
+        const response = await fetch("/api/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(order),
+        });
+        if (response.ok) {
+          alert(`Thank you ${customerName} for your purchase!`);
+          window.location.href = "/orders";
+        }
+      } catch (error) {
+        console.error("Error saving the order", error);
+        alert("Could not save the order. Please try again.");
+      }
+    }
+
+    // Function to fetch and display menu from the server
+    async function loadMenu() {
+      try {
+        const response = await fetch("/api/menu");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const menuItems = await response.json();
+
+        menuItems.forEach((menuItem, index) => {
+          const menuItemDiv = document.createElement("div");
+          menuItemDiv.classList.add("menu-item");
+          menuItemDiv.innerHTML = `
+                <img src="${menuItem.image_path}" alt="${menuItem.menu_name}">
+                <h3>${menuItem.menu_name}</h3>
+                <p>${menuItem.price} Baht</p>
+                ${menuItem.quantity > 0 ? `
+                <label for="quantity-${menuItem.menu_name}">Quantity:</label>
+                <input type="number" id="quantity-${menuItem.menu_name}" class="quantity-input" value="1" min="1" data-max-quantity="${menuItem.quantity}">
+                <button onclick="addToOrder('${menuItem.menu_name}', ${menuItem.price}, document.getElementById('quantity-${menuItem.menu_name}'), ${menuItem.quantity})">
+                Add to Order
+                </button>
+                  ` : '<p>Out of Stock</p>'}
+             `;
+          menuListContainer.appendChild(menuItemDiv);
+        });
+      } catch (error) {
+        console.error("Error fetching menu:", error);
+        menuListContainer.innerHTML = "<p>Could not load the menu. Please try againa later.</p>";
+      }
+    }
+
+    // Load menu on page load
+    window.onload = loadMenu;
+  </script>
+</body>
+
+</html>
